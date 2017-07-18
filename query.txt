@@ -1,0 +1,123 @@
+CREATE DATABASE VehicleRentSystem
+
+
+CREATE TABLE vehicle(
+	VehicleLicenseNo VARCHAR(20) NOT NULL,
+	name VARCHAR(150) NOT NULL,
+	type VARCHAR(20) NOT NULL,
+    model VARCHAR(200) NOT NULL,
+    insuraneNo VARCHAR(100) NOT NULL,
+	color VARCHAR(20) NOT NULL,
+    AirCondition boolean NOT NULL,
+    AutoGear boolean NOT NULL,
+    manufacture VARCHAR(150),
+    manufactCountry VARCHAR(150),
+    registeredCountry VARCHAR(100) NOT NULL,
+    registeredRegion VARCHAR(100) NOT NULL,
+    
+    CONSTRAINT pk_vehicleRente PRIMARY KEY(VehicleLicenseNo)
+)
+
+ALTER TABLE vehicle ADD onhand boolean NOT NULL
+
+ALTER TABLE `vehicle` ADD UNIQUE(`model`);
+ALTER TABLE `vehicle` ADD UNIQUE(`type`);
+
+
+CREATE TABLE employee(
+    empId INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    NIC VARCHAR(10) NOT NULL,
+    address VARCHAR(200) NOT NULL,
+    phone1 INT NOT NULL,
+    phone2 INT,
+    email VARCHAR(50),
+    CONSTRAINT clerk_pk PRIMARY KEY(empId)
+    )
+
+ALTER TABLE employee ADD emp_status VARCHAR(30) NOT NULL
+ALTER TABLE employee ADD birthyear DATE
+
+
+CREATE TABLE manager(
+    mid INT AUTO_INCREMENT,
+    name VARCHAR(150),
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    CONSTRAINT PRIMARY KEY(mid)
+    )
+
+CREATE TABLE customer(
+    cusId INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    NIC VARCHAR(10) NOT NULL,
+    address VARCHAR(200) NOT NULL,
+    phone1 INT NOT NULL,
+    phone2 INT,
+    email VARCHAR(50),
+    CONSTRAINT cus_pk PRIMARY KEY(cusId)
+    )
+
+ALTER TABLE customer ADD cus_status VARCHAR(30) NOT NULL
+ALTER TABLE customer ADD cus_license_no VARCHAR(15) NOT NULL
+
+
+CREATE TABLE payment_details(
+    rent_detail_no INT NOT NULL AUTO_INCREMENT,
+    vehicle_type VARCHAR(20) NOT NULL,
+    vehicle_model VARCHAR(200) NOT NULL,
+    rental_price REAL NOT NULL,
+    overdue_price REAL NOT NULL,
+    CONSTRAINT payment_pk PRIMARY KEY(rent_detail_no),
+    CONSTRAINT payment_fk2 FOREIGN KEY(vehicle_type) REFERENCES vehicle(type) ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+    CONSTRAINT payment_fk1 FOREIGN KEY(vehicle_model) REFERENCES vehicle(model) ON 	DELETE NO ACTION
+    ON UPDATE NO ACTION
+    )
+
+
+
+
+CREATE TABLE rental(
+    rentalId INT NOT NULL AUTO_INCREMENT,
+    issue_date DATE NOT NULL,
+    issue_time TIME NOT NULL,
+    duration INT,
+    due_date DATE NOT NULL,
+    due_time TIME NOT NULL,
+    VehicleLicenseNo VARCHAR(20) NOT NULL,
+	empId INT NOT NULL,
+	cusId INT NOT NULL,
+    rental_status VARCHAR(10) NOT NULL,
+    rent_detail_no INT NOT NULL,
+    rental_price REAL NOT NULL,
+    first_installment REAL NOT NULL,
+    
+    CONSTRAINT rental_pk PRIMARY KEY(rentalId),
+    
+    CONSTRAINT rental_fk1 FOREIGN KEY(VehicleLicenseNo)	REFERENCES vehicle(VehicleLicenseNo),
+    
+    CONSTRAINT rental_fk2 FOREIGN KEY(empId) REFERENCES employee(empId),
+    
+    CONSTRAINT rental_fk3 FOREIGN KEY(cusId) REFERENCES customer(cusId),
+    
+    CONSTRAINT rental_fk4 FOREIGN KEY(rent_detail_no) REFERENCES payment_details(rent_detail_no)
+    )
+
+
+
+--this view consist with three tables as 'vehicle', 'rental' and 'payment_details' and using this view get the 
+--onhand vehicle details and rent details to show in 'Rents category' in vehicle rent system main window
+--otherwise have to write lot of sql codes in java program. Using this view only takes one sql queries to get details to jTable
+
+CREATE VIEW onHandVehicles
+AS
+SELECT v.VehicleLicenseNo, v.type, v.name, v.model, v.color, v.aircondition, v.autogear, r.rental_price, p.overdue_price, r.first_installment
+FROM vehicle v, rental r, payment_details p
+WHERE v.VehicleLicenseNo = r.VehicleLicenseNo AND p.rent_detail_no = r.rent_detail_no AND v.onhand = 1
+
+
+
+ALTER TABLE rental
+ADD CONSTRAINT rental_fk5
+FOREIGN KEY (cusId) REFERENCES customer(cNo)
